@@ -1,0 +1,162 @@
+{
+	"equationrenderer": {
+
+		"mw-remote":{
+			"name": "mw-remote",
+			"moduleLocation": "derived/ui/mw-remote"
+		},
+		"dijit":{
+			"name": "dijit",
+			"moduleLocation": "derived/ui/dijit"
+		},
+		"mw-utils":{
+			"name": "mw-utils",
+			"moduleLocation": "derived/ui/mw-utils"
+		},
+		"mw-keybindings":{
+			"name": "mw-keybindings",
+			"moduleLocation": "derived/ui/mw-keybindings"
+		},
+		"mw-log":{
+			"name": "mw-log",
+			"moduleLocation": "derived/ui/mw-log"
+		},
+		"mw-store-utils":{
+			"name": "mw-store-utils",
+			"moduleLocation": "derived/ui/mw-store-utils"
+		},
+		"mw-statemachine":{
+			"name": "mw-statemachine",
+			"moduleLocation": "derived/ui/mw-statemachine"
+		},
+		"mw-menu":{
+			"name": "mw-menu",
+			"moduleLocation": "derived/ui/mw-menu",
+			"css": "derived/ui/mw-menu/css",
+			"images": "derived/ui/mw-menu/images"
+		},
+		"mw-mixins":{
+			"name": "mw-mixins",
+			"moduleLocation": "derived/ui/mw-mixins"
+		},
+		"mw-form":{
+			"name": "mw-form",
+			"moduleLocation": "derived/ui/mw-form",
+			"css": "derived/ui/mw-form/css",
+			"images": "derived/ui/mw-form/images"
+		},
+		"mw-peermodel":{
+			"name": "mw-peermodel",
+			"moduleLocation": "derived/ui/mw-peermodel"
+		},
+		"MW":{
+			"name": "MW",
+			"moduleLocation": "ui/webwidgets/src/js/MW"
+		},
+		"mw-messageservice":{
+			"name": "mw-messageservice",
+			"moduleLocation": "derived/ui/mw-messageservice"
+		},
+		"images":{
+			"name": "images",
+			"moduleLocation": "ui/webwidgets/src/images"
+		},
+		"dojox":{
+			"name": "dojox",
+			"moduleLocation": "derived/ui/dojox"
+		},
+		"dgrid":{
+			"name": "dgrid",
+			"moduleLocation": "derived/ui/dgrid"
+		},
+		"mw-overlay-utils":{
+			"name": "mw-overlay-utils",
+			"moduleLocation": "derived/ui/mw-overlay-utils"
+		},
+		"mw-html-utils":{
+			"name": "mw-html-utils",
+			"moduleLocation": "derived/ui/mw-html-utils"
+		},
+		"mw-dialog-utils":{
+			"name": "mw-dialog-utils",
+			"moduleLocation": "derived/ui/mw-dialog-utils",
+			"css": "derived/ui/mw-dialog-utils/css",
+			"images": "derived/ui/mw-dialog-utils/images"
+		},
+		"spinner":{
+			"name": "spinner",
+			"moduleLocation": "derived/3p/ui/spinner"
+		},
+		"mw-dnd":{
+			"name": "mw-dnd",
+			"moduleLocation": "derived/ui/mw-dnd"
+		},
+		"equationrenderer":{
+			"name": "equationrenderer",
+			"moduleLocation": "ui/equationrenderer/js/app",
+			"css": "ui/equationrenderer/css-equationrenderer"
+		},
+		"mw-colorpicker":{
+			"name": "mw-colorpicker",
+			"moduleLocation": "derived/ui/mw-colorpicker",
+			"css": "derived/ui/mw-colorpicker/css"
+		},
+		"mw-gesture":{
+			"name": "mw-gesture",
+			"moduleLocation": "derived/ui/mw-gesture"
+		},
+		"xstyle":{
+			"name": "xstyle",
+			"moduleLocation": "derived/ui/xstyle"
+		},
+		"mw-dom-utils":{
+			"name": "mw-dom-utils",
+			"moduleLocation": "derived/ui/mw-dom-utils"
+		},
+		"dojo":{
+			"name": "dojo",
+			"moduleLocation": "derived/ui/dojo"
+		},
+		"mw-browser-utils":{
+			"name": "mw-browser-utils",
+			"moduleLocation": "derived/ui/mw-browser-utils"
+		},
+		"mw-navigationbar":{
+			"name": "mw-navigationbar",
+			"moduleLocation": "derived/ui/mw-navigationbar",
+			"css": "derived/ui/mw-navigationbar/css"
+		},
+		"put-selector":{
+			"name": "put-selector",
+			"moduleLocation": "derived/ui/put-selector"
+		},
+		"l10n":{
+			"name": "l10n",
+			"moduleLocation": "ui/webwidgets/src/l10n"
+		},
+		"maven_component_ui":{
+			"name": "maven_component_ui",
+			"moduleLocation": "derived/ui/maven_component_ui"
+		},
+		"mw-deprecation-utils":{
+			"name": "mw-deprecation-utils",
+			"moduleLocation": "derived/ui/mw-deprecation-utils"
+		},
+		"mw-filename-utils":{
+			"name": "mw-filename-utils",
+			"moduleLocation": "derived/ui/mw-filename-utils"
+		},
+		"mw-event-utils":{
+			"name": "mw-event-utils",
+			"moduleLocation": "derived/ui/mw-event-utils"
+		},
+		"mw-string-utils":{
+			"name": "mw-string-utils",
+			"moduleLocation": "derived/ui/mw-string-utils"
+		},
+		"mw-actiondataservice":{
+			"name": "mw-actiondataservice",
+			"moduleLocation": "derived/ui/mw-actiondataservice"
+		}
+	}
+}

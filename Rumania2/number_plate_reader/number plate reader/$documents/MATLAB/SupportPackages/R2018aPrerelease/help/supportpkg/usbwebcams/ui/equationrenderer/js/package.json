@@ -1,0 +1,11 @@
+{
+    "name": "equationrenderer",
+    "description": "Equation Renderer",
+    "main": "./app/MathRenderer",
+    "dependencies": {
+        "dojo": "current",
+        "dijit": "current",
+        "MW" : "current"	
+    },
+    "dojoBuild": "package.js"
+}

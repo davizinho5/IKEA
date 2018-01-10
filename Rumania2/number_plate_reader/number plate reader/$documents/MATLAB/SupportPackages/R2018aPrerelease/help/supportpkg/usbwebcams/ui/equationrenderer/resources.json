@@ -1,0 +1,8 @@
+{
+  "resources_equationrenderer":[
+    {
+        "type":"css",
+		"location":"ui/equationrenderer/css-equationrenderer"
+    }
+]
+}

@@ -1,0 +1,68 @@
+function final
+clc;
+clear all;
+close all;
+disp('This script outputs the characers of a 6 digit vehicle license plate.');
+
+
+in = input('Name of the image file?(image.format) ','s');
+I = imread(in);
+
+I=imresize(I,[400 NaN]);
+I = rgb2gray(I);
+I = medfilt2(I,[3 3]);
+s = strel('disk',1);
+si = imdilate(I,s);
+se = imerode(I,s);
+I = imsubtract(si,se);
+I = mat2gray(I);
+I = conv2(I,[1 1;1 1]);
+I = imadjust(I,[0.5 0.7],[0 1],0.1);
+I = logical(I);
+er = imerode(I,strel('line',50,0));
+I = imsubtract(I,er);
+I = imfill(I,'holes');
+I = bwmorph(I,'thin',1);
+I = imerode(I,strel('line',3,90));
+I = bwareaopen(I,100);
+
+Iprops=regionprops(I,'BoundingBox','Image');
+NR=cat(1,Iprops.BoundingBox);
+r=controlling(NR);
+if ~isempty(r) % If succesfully indices of desired boxes are achieved.
+    I={Iprops.Image}; % Cell array of 'Image' (one of the properties of regionprops)
+    noPlate=[]; % Initializing the variable of number plate string.
+    for v=1:length(r)
+        N=I{1,r(v)}; % Extracting the binary image corresponding to the indices in 'r'.
+        letter=readLetter(N); % Reading the letter corresponding the binary image 'N'.
+        while letter=='O' || letter=='0' % Since it wouldn't be easy to distinguish
+            if v<=3                      % between '0' and 'O' during the extraction of character
+                letter='O';              % in binary image. Using the characteristic of plates in Karachi
+            else                         % that starting three characters are alphabets, this code will
+                letter='0';              % easily decide whether it is '0' or 'O'. The condition for 'if'
+            end                          % just need to be changed if the code is to be implemented with some other
+            break;                       % cities plates. The condition should be changed accordingly.
+        end
+        noPlate=[noPlate letter]; % Appending every subsequent character in noPlate variable.
+    end
+    fid = fopen('noPlate.txt', 'wt'); % This portion of code writes the number plate
+    fprintf(fid,'%s\n',noPlate);      % to the text file, if executed a notepad file with the
+    fclose(fid);                      % name noPlate.txt will be open with the number plate written.
+    winopen('noPlate.txt')
+    
+%     Uncomment the portion of code below if Database is  to be organized. Since my
+%     project requires database so I have written this code. DB is the .mat
+%     file containing the array of structure of all entries of database.
+%     load DB
+%     for x=1:length(DB)
+%         recordplate=getfield(DB,{1,x},'PlateNumber');
+%         if strcmp(noPlate,recordplate)
+%             disp(DB(x));
+%             disp('*-*-*-*-*-*-*');
+%         end
+%     end
+    
+else % If fail to extract the indexes in 'r' this line of error will be displayed.
+    fprintf('Unable to extract the characters from the number plate.\n');
+    fprintf('The characters on the number plate might not be clear or touching with each other or boundries.\n');
+end

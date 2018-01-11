@@ -1,5 +1,5 @@
 clear
-im_DB = imresize(rgb2gray(imread('fisura_centrala_spate.JPG')),0.5);
+im_DB = imresize(rgb2gray(imread('orig.jpg')),0.5);
 imop=imopen(im2bw(imadjust(im_DB),0.35),strel('disk',10));
 imc=imclose(imop,strel('disk',9));
 im_DB=im_DB.*uint8(imc);

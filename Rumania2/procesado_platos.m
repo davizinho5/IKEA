@@ -1,6 +1,7 @@
 
 cd fotos21dec17/
 cd produs1/
+% cd produs2/
 cd original
 
 %% Lista todos los archivos con la extension ".bag"
@@ -32,7 +33,7 @@ for num_file = 1:length(filesBAG) % Ciclo para cada archivo
     Asorted = cell2struct(Acell, Afields, 1);
 
     % Se pinta el cuadrado más grande
-    figure(1),imshow(Ibw); hold on;
+    figure,imshow(Ibw); hold on;
     rectangle('position',Asorted(1).BoundingBox,'edgecolor','r','linewidth',2);
     hold off
     
@@ -44,6 +45,12 @@ for num_file = 1:length(filesBAG) % Ciclo para cada archivo
         disp(message);
         % Recortar - plato circular (1689*1686)
         I1 = imcrop(I,Asorted(1).BoundingBox);
+     %% FIJO [XMIN YMIN WIDTH HEIGHT]
+        BB = [330 330 1020 1020]; 
+        Ic = imcrop(I1, BB);
+        
+        
+        pause;
 
     %% RECTANGULAR    
     elseif circularity < 1.8
@@ -52,43 +59,30 @@ for num_file = 1:length(filesBAG) % Ciclo para cada archivo
         % Orientar
         Ibw = imcrop(Ibw,Asorted(1).BoundingBox);
         Ibw = imfill(Ibw,'holes');
-        [I,threshOut] = edge(Ibw,'Sobel');
+        [Gmag, Gdir] = imgradient(Ibw,'sobel');
+        [Gx, Gy] = imgradientxy(Ibw,'sobel');
+        direction_mat = Gy(1:50,400:1400);
 
-        % I_rot = imrotate(I1,65);
-        % Recortar  - plato rectangular (922*1840)        
-        I1 = imcrop(I,Asorted(1).BoundingBox);
+        % direccion de la linea
+        [H,theta,rho] = hough(direction_mat,'RhoResolution',1,'ThetaResolution',0.05);
+        peaks  = houghpeaks(H,5);
+        lines = houghlines(direction_mat,theta,rho,peaks);
+        angle = sum(lines(:).theta/numel(lines))-sign(sum(lines(:).theta/numel(lines)))*90;
+        %  Recortar (922*1840) y Rotar
+        I_crop = imcrop(I,Asorted(1).BoundingBox);
+        I_rot = imrotate(I_crop,angle);
 
-
-    %%  ¿AUTOMATICO?
-% %         I1g = rgb2gray(I1);
-% %         sigma = 6;
-% %         smoothImage = imgaussfilt(I1g,sigma);
-% %         smoothGradient = imgradient(smoothImage,'CentralDifference');
-% %         I2 = histeq(smoothGradient);
-% %         Ibw = imbinarize(I2,graythresh(I2));
-% %         % ByN
-% %         stat = regionprops(Ibw,'boundingbox','Area','Perimeter');
-% %         figure(2),imshow(I1), hold on;
-% %         for cnt = 1 : numel(stat)
-% %             if (stat(cnt).Area > 50000) & (stat(cnt).Area < 70000)
-% %                 BB(cnt,:) = [stat(cnt).BoundingBox(1:2) abs(stat(cnt).BoundingBox(1:2)-stat(cnt).BoundingBox(3:4))];
-% %                 rectangle('position',stat(cnt).BoundingBox,'edgecolor','r','linewidth',2);
-% %             end
-% %         end
-% %         hold off
-% %         pause;
-
-     %%  ¿FIJO? [XMIN YMIN WIDTH HEIGHT]
-        BB = [130 148 (630-130) (775-148); 660 148 (1160-660) (775-148); 1200 148 (1700-1200) (775-148)]; 
-        Ic1 = imcrop(I, BB(1,:));
-        Ic2 = imcrop(I, BB(2,:));
-        Ic3 = imcrop(I, BB(3,:));
-        figure(2),imshow(I1), hold on;
+     %% FIJO [XMIN YMIN WIDTH HEIGHT]
+        BB = [155 180 490 610; 670 180 490 610; 1210 180 490 610]; 
+        Ic1 = imcrop(I_rot, BB(1,:));
+        Ic2 = imcrop(I_rot, BB(2,:));
+        Ic3 = imcrop(I_rot, BB(3,:));
+        figure,imshow(I_rot), hold on;
         rectangle('position', BB(1,:),'edgecolor','r','linewidth',2);
         rectangle('position', BB(2,:),'edgecolor','b','linewidth',2);
         rectangle('position', BB(3,:),'edgecolor','g','linewidth',2);
         hold off;
-        pause;
+        figure,subplot(1,3,1),imshow(Ic1),subplot(1,3,2),imshow(Ic2),subplot(1,3,3),imshow(Ic3);
   
     else
         message = sprintf('Wrong detection');

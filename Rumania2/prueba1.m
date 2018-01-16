@@ -3,7 +3,7 @@
 % I=imresize(I,[600 NaN]);
 % figure; imshow(I)
 
-I = Ig_ad;
+I = Ig_cac;
 % I = medfilt2(I,[4 4]);
 % I=imgaussfilt(I,1);
 % figure; imshow(I)

@@ -126,15 +126,13 @@ message = sprintf('Im: %d, Circularity: %.3f, so the object is a rectangle', num
 %         figure, imshow(I_letters)        
         % Find individual letters
         Ig = rgb2gray(I_letters);
-        Ig_c = wiener2(Ig,[2 2]);
-        Ig_ca = imadjust(Ig_c); 
-        Ig_cac = wiener2(Ig_ca,[4 4]);
-        I_edge = edge(Ig_cac,'Canny');
-        figure, imshow(I_edge)
-        Ibw = bwareaopen(I_edge, 40, 8);
-        figure, imshow(Ibw)
-        SE = strel('disk',4);
-        Ibw2 = imerode(Ibw2,SE);
+        figure, imshow(Ig)
+        Ig_clean = wiener2(Ig,[3 3]);
+        figure, imshow(Ig_clean)
+        Ig_ad = imadjust(Ig); 
+        figure, imshow(Ig_ad)
+        
+        
         
         
         % Edge detection

@@ -12,6 +12,8 @@ for num_file = 1:length(filesBAG) % Ciclo para cada archivo
     I = imread(filesBAG(num_file).name);  
     Ig = rgb2gray(I);
 
+    figure, imshow(I)
+    
     %% Elegir circulo y rectangulos
     Ibw = im2bw(Ig,graythresh(Ig));
     Ibw2 = bwareaopen(Ibw, 80, 8);
@@ -35,9 +37,9 @@ for num_file = 1:length(filesBAG) % Ciclo para cada archivo
     Asorted = cell2struct(Acell, Afields, 1);
 
     % Se pinta el cuadrado más grande
-%     figure,imshow(Ibw); hold on;
-%     rectangle('position',Asorted(1).BoundingBox,'edgecolor','r','linewidth',2);
-%     hold off
+    figure,imshow(Ibw); hold on;
+    rectangle('position',Asorted(1).BoundingBox,'edgecolor','r','linewidth',2);
+    hold off
 
     % Para elegir entra circulos y rectangulos calculamos la circularidad
     circularity = Asorted(1).Perimeter^2 / (4 * pi * [Asorted(1).Area]);
@@ -60,11 +62,16 @@ message = sprintf('Im: %d, Circularity: %.3f, so the object is a rectangle', num
         big_diam = diameters(diameters > 950,:);
         centers = stats.Centroid(diameters > 950);
         center_image = size(Ibw)/2;
-        dist_center=[];
-        for i=1:1:size(centers,1)
-          dist_center(i) = sqrt(sum(center_image - centers(i,:)).^2);
+        if size(centers,1) > 1 
+            dist_center=[];
+            for i=1:1:size(centers,1)
+              dist_center(i) = sqrt(sum(center_image - centers(i,:)).^2);
+            end
+            [min_dist, ind] = min(dist_center);
+            centre = centers(ind,:);
         end
-        [min_dist, ind] = min(dist_center);
+        figure, imshow(Ic), hold on
+        viscircles(,big_diam(ind)/2) , hold off
         
         radii = big_diam(ind)/2;
         rad_offset = 25;
@@ -123,16 +130,18 @@ message = sprintf('Im: %d, Circularity: %.3f, so the object is a rectangle', num
 %                         hold off
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%         figure, imshow(I_letters)        
+        figure, imshow(I_letters)        
         % Find individual letters
         Ig = rgb2gray(I_letters);
-        figure, imshow(Ig)
-        Ig_clean = wiener2(Ig,[3 3]);
-        figure, imshow(Ig_clean)
-        Ig_ad = imadjust(Ig); 
-        figure, imshow(Ig_ad)
-        
-        
+        Ig_c = wiener2(Ig,[2 2]);
+        Ig_ca = imadjust(Ig_c); 
+        Ig_cac = wiener2(Ig_ca,[4 4]);
+        I_edge = edge(Ig_cac,'Canny');
+        figure, imshow(I_edge)
+        Ibw = bwareaopen(I_edge, 40, 8);
+        figure, imshow(Ibw)
+        SE = strel('disk',4);
+        Ibw2 = imerode(Ibw2,SE);
         
         
         % Edge detection
@@ -143,6 +152,8 @@ message = sprintf('Im: %d, Circularity: %.3f, so the object is a rectangle', num
          % Estilizar edge
         SE  = strel('Disk',4,4);
         I_edge = imopen(I_edge, SE);          
+        
+        pause;
         
         %% Oriented Boxes
         % compute image labels, using minimal connectivity

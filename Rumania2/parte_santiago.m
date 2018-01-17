@@ -47,3 +47,51 @@ keys{ii}=imcrop(I3,[(size(I3,1)/2)-hl(ii),(size(I3,2)/2)-hw(ii),2*hl(ii),2*hw(ii
 % % % % %             pause;
 % % % %         end
         end
+
+        
+        
+        
+        
+        
+        
+         %% V1
+% % % %     vx = floor(size(I3,1)/2) + [-lc + ws; lc + ws ; lc - ws ; -lc - ws];
+% % % %     vy = floor(size(I3,1)/2) + [-ls - wc; ls - wc ; ls + wc ; -ls + wc];
+% % % %     I4=imcrop(I3,[min(vx), min(vy), max(vx)-min(vx), max(vy)-min(vy)]);
+% % % %     figure, imshow(I4), hold on, hold on,
+% % % %     plot(vx, vy, 'g')
+% % % %     hold off
+    
+    %% V2 
+% % %     Ig = rgb2gray(I3);
+% % %     Ig(find(Ig == 0)) = sum(Ig(find(Ig ~= 0)))/size(find(Ig ~= 0),1);
+% % %     I_edge = edge(Ig,'Canny',0.5,2.95);
+% % %     SE  = strel('Disk',1,8);
+% % %     I_edge = imdilate(I_edge, SE);
+% % %     figure; imshow(I_edge)
+
+    %% V3
+    stats = [regionprops(Ibw); regionprops(not(Ibw))];
+    vert = [];
+    for i = 1:numel(stats)
+        vert((i-1)*4+1,:) = stats(i).BoundingBox(1:2);
+        vert((i-1)*4+2,:) = stats(i).BoundingBox(1:2)+[stats(i).BoundingBox(3) 0];
+        vert((i-1)*4+3,:) = stats(i).BoundingBox(1:2)+[0 stats(i).BoundingBox(4)];
+        vert((i-1)*4+4,:) = stats(i).BoundingBox(1:2)+[stats(i).BoundingBox(3),stats(i).BoundingBox(4)];
+    end
+    vert(find(vert(:,1)<1),:) =[];  
+    vert(find(vert(:,2)<1),:) =[];
+    vert(find(vert(:,1)>size(I3,2)),:) =[];
+    vert(find(vert(:,2)>size(I3,1)),:) =[];  
+    vert
+    
+    X=vert(:,1);
+    Y=vert(:,2);
+    minX = floor(min(X));
+    maxX = ceil(max(X));
+    minY = floor(min(Y));
+    maxY = ceil(max(Y));
+    keys{i}=imcrop(I3,[floor(min(X)), floor(min(Y)), ceil(max(X))-floor(min(X)), ceil(max(Y))-floor(min(Y))]);
+    figure, imshow(keys{i})
+    pause;
+        

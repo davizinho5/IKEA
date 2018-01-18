@@ -4,12 +4,12 @@ cd fotos21dec17/
 cd produs2/
 cd original
 
-PINTAR = 1;
+PINTAR = 0;
 
 %% Lista todos los archivos con la extension ".bag"
 filesBAG = dir('*.jpg');
-
-for num_file = 1:length(filesBAG) % Ciclo para cada archivo
+% Ciclo para cada archivo
+for num_file = 1:length(filesBAG) 
 
     I = imread(filesBAG(num_file).name);  
     Ig = rgb2gray(I);
@@ -51,8 +51,10 @@ for num_file = 1:length(filesBAG) % Ciclo para cada archivo
     circularity = Asorted(1).Perimeter^2 / (4 * pi * [Asorted(1).Area]);
     %% CIRCULAR    
     if circularity  < 1.15
-message = sprintf('Im: %d, Circularity: %.3f, so the object is a rectangle', num_file, circularity);
-        disp(message);
+disp(filesBAG(num_file).name)        
+num_file
+% message = sprintf('Im: %, Circularity: %.3f, so the object is a rectangle', num_file, circularity);
+%         disp(message);
         % Recortar - plato circular (1689*1686)
         I1 = imcrop(I,Asorted(1).BoundingBox);
      %% FIJO [XMIN YMIN WIDTH HEIGHT]
@@ -80,7 +82,7 @@ message = sprintf('Im: %d, Circularity: %.3f, so the object is a rectangle', num
         [min_dist, ind] = min(dist_center);      
 
         if PINTAR
-            figure, imshow(I1), hold on
+            figure, imshow(Ibw), hold on
             viscircles(center_image,big_diam(ind)/2) , hold off
         end
         
@@ -96,7 +98,7 @@ message = sprintf('Im: %d, Circularity: %.3f, so the object is a rectangle', num
                 end
             end
         end
-             
+
         % Find Letters Area        
         % Mejorar el ajuste sin contar con los blancos?
         Ig = rgb2gray(Ic);
@@ -132,10 +134,8 @@ message = sprintf('Im: %d, Circularity: %.3f, so the object is a rectangle', num
        
         %% FIJO [XMIN YMIN WIDTH HEIGHT]
         I_letters=imcrop(Ic, [minX minY (maxX-minX) (maxY-minY)]);
-        
         if PINTAR
-            figure, imshow(I_letters)   
-            
+            figure, imshow(I_letters)              
             figure(20),clf, imshow(I_letters)
             figure(10),clf, subplot(2,1,1), imshow(Ic), ...
                 subplot(2,1,2), imshow(I_edge), hold on, ...
@@ -147,121 +147,157 @@ rectangle('Position', AA(i).BoundingBox,'EdgeColor','r', 'linewidth', 2)
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+         
+        Ig = rgb2gray(I_letters);
+        boxes=[];
+        disk_size=2;       
+        canny_thesh = 0.475;
+        tries = 1;
+        white_points = [1400 1500 1600];
+        % We wan 3 groups of letters
+        while(size(boxes,1) ~= 3) % && 
+            if(disk_size > 8)
+                disk_size=2;
+            end    
+            I_edge = edge(Ig,'Canny',canny_thesh,1.95);
+            while (sum(sum(I_edge)) < white_points(tries)) 
+                canny_thesh = canny_thesh-0.025;
+                I_edge = edge(Ig,'Canny',canny_thesh,1.95);               
+            end
+            % If we have 4 groups, make a small dilation
+% % %             if (size(boxes,1) == 4)
+% % %                 SE  = strel('Disk',2,4);
+% % %                 I_edge = imdilate(I_edge, SE);  
+% % %             else % Otherwise, medium dilation
+% % %                 disk_size = disk_size + 1;
+% % %                 SE  = strel('Disk',disk_size,8);
+% % %                 I_edge = imdilate(I_edge, SE);  
+% % %             end
+            disk_size = disk_size + 1;
+            SE  = strel('Disk',disk_size,8);
+            I_edge = imdilate(I_edge, SE);
+            % Add a black frame 
+            aux = zeros(size(I_edge) + [2 2]);
+            aux(2:size(I_edge,1)+1,2:size(I_edge,2)+1) = I_edge;
+            I_edge = aux;
+                        
+            %% Oriented Boxes
+            % compute image labels, using minimal connectivity
+            lbl = bwlabel(I_edge, 4);
+            nLabels = max(lbl(:));
+
+            %% Compute enclosing oriented boxes
+            boxes = imOrientedBox(lbl);
+            % Filter the boxes by the expected area
+            for i=size(boxes,1):-1:1 
+                if (boxes(i,3)*boxes(i,4)<1300) || ...
+                    (boxes(i,3)*boxes(i,4)>7000) 
+                    boxes(i,:)=[];
+                end
+            end
+            % ONLY IN DEBUG MODE
+            if nLabels > 0 
+                rgb = label2rgb(lbl, jet(nLabels), 'w', 'shuffle');
+                figure, imshow(I_edge), hold on;
+                drawOrientedBox(boxes, 'linewidth', 2);
+            end
+        end
         
-        % Find individual letters
-    I = I_letters;
-I = rgb2gray(I);
-% I=imresize(I,[600 NaN]);
-figure; imshow(I)
+        % display result
+        if PINTAR
+            rgb = label2rgb(lbl, jet(nLabels), 'w', 'shuffle');
+            figure, imshow(I_edge), hold on;
+            drawOrientedBox(boxes, 'linewidth', 2);
+        end
+        % Add area value
+        boxes = [boxes  zeros(size(boxes,1),1)];
+        for p=1:1:size(boxes,1)
+            boxes(p,size(boxes,2)) = boxes(p,3)*boxes(p,4);
+        end       
+        % Order by area??
+        [min_a,small]=min(boxes(:,6))
 
-% I = Ig_cac;
-% I = medfilt2(I,[4 4]);
-I=imgaussfilt(I,1);
-figure; imshow(I)
+        cx    = boxes(:,1);
+        cy    = boxes(:,2);
+        hl    = boxes(:,3) /2;
+        hw    = boxes(:,4) /2;
+        theta = boxes(:,5);
 
-I1=I;
-[I,threshOut] = edge(I,'Canny',0.474,1.95);
-figure; imshow(I)
+        keys={};
+        df = 26;
+        %off_w = [52 41 15];
+        for i=1:size(boxes,1)
+            % pre-compute angle data
+            cot = cosd(theta(i));
+            sit = sind(theta(i));
+            % x and y shifts
+            lc = hl(i) * cot;
+            ls = hl(i) * sit;
+            wc = hw(i) * cot;
+            ws = hw(i) * sit;
+            % coordinates of box vertices
+            vx = cx(i) + [-lc + ws; lc + ws ; lc - ws ; -lc - ws];
+            vy = cy(i) + [-ls - wc; ls - wc ; ls + wc ; -ls + wc];
 
-SE  = strel('Disk',5,4);
-bin = imdilate(I, SE);
-figure; imshow(I)
+            Ic=imcrop(I_letters,[min(vx), min(vy), max(vx)-min(vx), max(vy)-min(vy)]);
+            Ir=imrotate(Ic, theta(i));
 
-lbl = bwlabel(bin, 4);
-nLabels = max(lbl(:));
-
-% display label image
-rgb = label2rgb(lbl, jet(nLabels), 'w', 'shuffle');
-figure(4); clf;imshow(rgb);
-
-%% Compute enclosing oriented boxes
-boxes = imOrientedBox(lbl);
-
-%% Read the boxes
-for ii=size(boxes,1):-1:1
-    if (boxes(ii,3)<45) || (boxes(ii,3)>125)
-        boxes(ii,:)=[];
-    end
-end
-
-% display result
-hold on;
-drawOrientedBox(boxes, 'linewidth', 2);
-
-box=boxes;
-cx    = box(:,1);
-cy    = box(:,2);
-hl    = box(:,3) / 2;
-hw    = box(:,4) / 2;
-theta = box(:,5);
-radio = sqrt(hl(:).^2+hw(:).^2);
-
-for ii=1:size(boxes,1)
-
-    I2=imcrop(I1,[cx(ii)-radio(ii),cy(ii)-radio(ii),2*radio(ii),2*radio(ii)]);
-%     figure(5); clf; imshow(I2);
-
-    I3=imrotate(I2,theta(ii));
-%     figure(6); clf; imshow(I3);
-
-    C=size(I3)/2;
-    I4=imcrop(I3,[C(1)-hl(ii),C(2)-hw(ii),2*hl(ii),2*hw(ii)]);
-    figure, imshow(I4);
-
-%      I5 = imadjust(I4); 
-%      figure(8); clf; imshow(I5);
-
-    %leer(I5)
-end
-
-% figure,subplot(2,3,1),imshow(I), ...
-%        subplot(2,3,2),imshow(Ic), ...
-%        subplot(2,3,3),imshow(I_edge), hold on,drawOrientedBox(boxes, 'linewidth', 2), hold off;
-%        subplot(2,3,4),imshow(keys{1}), ...
-%        subplot(2,3,5),imshow(keys{2}), ...
-%        subplot(2,3,6),imshow(keys{3});
-
+            % All the letters in the same direction
+            %if abs(size(Ir,1) - 55) > abs(size(Ir,2) - 55)
+            size(Ir)
+            %if abs(size(Ir,1) - 62) > abs(size(Ir,2) - 62)
+            if small == i
+                disp('rotar')
+                Ir=imrotate(Ir, 90);
+            end
+            
+% % %             % Hay que ajustar más el tamaño de la ventana  
+% % %             %% V1
+% % %             if size(Ir,1) > size(Ir,1)
+% % %                 if hl(i) > hw(i)
+% % %                     df = hl(i); 
+% % %                     dc = hw(i);
+% % %                 else
+% % %                     dc = hl(i); 
+% % %                     df = hw(i);
+% % %                 end
+% % %             else
+% % %                 if hl(i) > hw(i)
+% % %                     dc = hl(i); 
+% % %                     df = hw(i);
+% % %                 else
+% % %                     df = hl(i); 
+% % %                     dc = hw(i);
+% % %                 end
+% % %             end
+% % %             vf = floor(size(Ir,1)/2) + [df -df];
+% % %             vc = floor(size(Ir,2)/2) + [dc -dc];
+%             size(Ic)
+            if(max(size(Ic)) < 65)
+                dc = 15;
+            else if(max(size(Ic)) > 100 )
+                    dc = 52;
+                else
+                    dc = 40;
+                end
+            end
+            vf = floor(size(Ir,1)/2) + [df -df];
+            vc = floor(size(Ir,2)/2) + [dc -dc];
+            keys{i}=imcrop(Ir,[min(vc), min(vf), max(vc)-min(vc), max(vf)-min(vf)]);
+            figure, imshow(keys{i})
+%             size(keys{i})
+            %% V2 - tamanho fijo
+% pause;
+%             vf = floor(size(Ir,1)/2) + [24 -24];
+%             vc = floor(size(Ir,2)/2) + [dc -dc];
+%             keys{i}=imcrop(Ir,[min(vc), min(vf), max(vc)-min(vc), max(vf)-min(vf)]);
+%             figure, imshow(keys{i})
+        end
         
-        figure(10),clf,subplot(1,2,1),imshow(I_letters), ...
-                       subplot(1,2,2),imshow(I_edge), hold on
-        drawOrientedBox(boxes, 'linewidth', 2);
-        hold off;
-
-% % % %         cx    = boxes(:,1);
-% % % %         cy    = boxes(:,2);
-% % % %         hl    = boxes(:,3) / 2;
-% % % %         hw    = boxes(:,4) / 2;
-% % % %         theta = boxes(:,5);
-% % % %         radio = sqrt(hl(:).^2+hw(:).^2);
-% % % % 
-% % % % %         keys={};
-% % % %         for ii=1:size(boxes,1)
-% % % %             I2=imcrop(I_letters,[cx(ii)-radio(ii),cy(ii)-radio(ii),2*radio(ii),2*radio(ii)]);
-% % % %             I3=imrotate(I2,theta(ii));
-% % % % keys{ii}=imcrop(I3,[(size(I3,1)/2)-hl(ii),(size(I3,2)/2)-hw(ii),2*hl(ii),2*hw(ii)]);       
-% % % %         end
-% % % %                
-% % % %         figure(10),clf,subplot(1,2,1),imshow(I_letters), ...
-% % % % %                subplot(1,3,2),imshow(I_edge), ...
-% % % %                subplot(1,2,2),imshow(I_edge), hold on, ...
-% % % %                for i = 1:size(keys,2)
-% % % % rectangle('Position', AA(i).BoundingBox,'EdgeColor','r', 'linewidth', 2)
-% % % %                end
-% % % %                hold off;
-% % % % %                subplot(2,3,4),imshow(keys{1}), ...
-% % % % %                subplot(2,3,5),imshow(keys{2}), ...
-% % % % %                subplot(2,3,6),imshow(keys{3});
-
+        
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-        
-        
-        
-        
-        
-        
-        
            
     %% RECTANGULAR    
     elseif circularity < 1.8

@@ -78,37 +78,3 @@ for i=1:size(boxes,1)
 end
     
    
-% % % 
-% % %     lbl = bwlabel(I_edge, 4);
-% % %     nLabels = max(lbl(:));
-% % %     box = imOrientedBox(lbl);
-% % %     if size(box,1) > 1
-% % %         maxBox = 0;
-% % %         ind=0;
-% % %         for j=1:1:size(box,1) 
-% % %            maxBox=max(maxBox, box(j,3)*box(j,4));
-% % %            if (maxBox == box(j,3)*box(j,4))
-% % %               ind = j;
-% % %            end
-% % %         end
-% % %     else
-% % %         ind = 1;
-% % %     end
-% % %     cot = cosd(box(ind,5));
-% % %     sit = sind(box(ind,5));
-% % %     % x and y shifts
-% % %     lc = (box(ind,3)/2) * cot;
-% % %     ls = (box(ind,3)/2) * sit;
-% % %     wc = (box(ind,4)/2) * cot;
-% % %     ws = (box(ind,4)/2) * sit;
-% % %     % coordinates of box vertices
-% % %     vx = box(ind,1) + [-lc + ws; lc + ws ; lc - ws ; -lc - ws];
-% % %     vy = box(ind,2) + [-ls - wc; ls - wc ; ls + wc ; -ls + wc]; 
-% % %     keys{i}=imcrop(I_letters,[min(vx), min(vy), max(vx)-min(vx), max(vy)-min(vy)]);
-% % % end
-% figure, imshow(I3)
-
-% % figure, imshow(keys{1})
-% % figure, imshow(keys{2})
-% % figure, imshow(keys{3})
-

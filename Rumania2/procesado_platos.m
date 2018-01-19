@@ -55,6 +55,7 @@ disp(filesBAG(num_file).name)
 num_file
 % message = sprintf('Im: %, Circularity: %.3f, so the object is a rectangle', num_file, circularity);
 %         disp(message);
+
         % Recortar - plato circular (1689*1686)
         I1 = imcrop(I,Asorted(1).BoundingBox);
      %% FIJO [XMIN YMIN WIDTH HEIGHT]
@@ -67,7 +68,7 @@ num_file
         
         % Conversion a BN
         Ibw = im2bw(rgb2gray(Ic),graythresh(rgb2gray(Ic)));
-        
+
         % find interior cilcle
         stats = regionprops('table',Ibw,'Centroid','MajorAxisLength','MinorAxisLength');
         diameters = mean([stats.MajorAxisLength stats.MinorAxisLength],2);
@@ -100,7 +101,6 @@ num_file
         end
 
         % Find Letters Area        
-        % Mejorar el ajuste sin contar con los blancos?
         Ig = rgb2gray(Ic);
         Ig_ad = imadjust(Ig);      
         % Edge detection
@@ -119,7 +119,6 @@ num_file
         maxX=0;
         maxY=0;
         for ii=size(stats,1):-1:1
-             % Este numero es ... muy AD-HOC
             if (stats(ii).Area > 18000) % (stats(ii).Area < 1500) ||(stats(ii).Area > 5400) 
                 Acell(:,ii)=[];
             else
@@ -127,7 +126,6 @@ num_file
                 minY=min(stats(ii).BoundingBox(2),minY);
                 maxX=max(stats(ii).BoundingBox(1)+stats(ii).BoundingBox(3),maxX);
                 maxY=max(stats(ii).BoundingBox(2)+stats(ii).BoundingBox(4),maxY);
-              
             end
         end
         AA = cell2struct(Acell, Afields, 1);
@@ -144,18 +142,15 @@ rectangle('Position', AA(i).BoundingBox,'EdgeColor','r', 'linewidth', 2)
                 end
             hold off
         end
-
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-         
+        
         Ig = rgb2gray(I_letters);
         boxes=[];
         disk_size=2;       
         canny_thesh = 0.475;
         tries = 1;
         white_points = [1400 1500 1600];
-        % We wan 3 groups of letters
-        while(size(boxes,1) ~= 3) % && 
+        % We want 3 groups of letters
+        while(size(boxes,1) ~= 3) || (sum(sum(aux)) < 50)
             if(disk_size > 8)
                 disk_size=2;
             end    
@@ -164,15 +159,7 @@ rectangle('Position', AA(i).BoundingBox,'EdgeColor','r', 'linewidth', 2)
                 canny_thesh = canny_thesh-0.025;
                 I_edge = edge(Ig,'Canny',canny_thesh,1.95);               
             end
-            % If we have 4 groups, make a small dilation
-% % %             if (size(boxes,1) == 4)
-% % %                 SE  = strel('Disk',2,4);
-% % %                 I_edge = imdilate(I_edge, SE);  
-% % %             else % Otherwise, medium dilation
-% % %                 disk_size = disk_size + 1;
-% % %                 SE  = strel('Disk',disk_size,8);
-% % %                 I_edge = imdilate(I_edge, SE);  
-% % %             end
+
             disk_size = disk_size + 1;
             SE  = strel('Disk',disk_size,8);
             I_edge = imdilate(I_edge, SE);
@@ -190,13 +177,14 @@ rectangle('Position', AA(i).BoundingBox,'EdgeColor','r', 'linewidth', 2)
             boxes = imOrientedBox(lbl);
             % Filter the boxes by the expected area
             for i=size(boxes,1):-1:1 
-                if (boxes(i,3)*boxes(i,4)<1300) || ...
+                if (boxes(i,3)*boxes(i,4)<1100) || ...
                     (boxes(i,3)*boxes(i,4)>7000) 
                     boxes(i,:)=[];
                 end
             end
+            sum(sum(aux))
             % ONLY IN DEBUG MODE
-            if nLabels > 0 
+            if PINTAR && nLabels > 0 
                 rgb = label2rgb(lbl, jet(nLabels), 'w', 'shuffle');
                 figure, imshow(I_edge), hold on;
                 drawOrientedBox(boxes, 'linewidth', 2);
@@ -214,8 +202,11 @@ rectangle('Position', AA(i).BoundingBox,'EdgeColor','r', 'linewidth', 2)
         for p=1:1:size(boxes,1)
             boxes(p,size(boxes,2)) = boxes(p,3)*boxes(p,4);
         end       
-        % Order by area??
-        [min_a,small]=min(boxes(:,6))
+        % Find order by area
+        index = [0 0 3 2 1];
+        [min_a,small]=min(boxes(:,6));
+        [max_a,large]=max(boxes(:,6));
+        med = index(small+large);
 
         cx    = boxes(:,1);
         cy    = boxes(:,2);
@@ -225,7 +216,7 @@ rectangle('Position', AA(i).BoundingBox,'EdgeColor','r', 'linewidth', 2)
 
         keys={};
         df = 26;
-        %off_w = [52 41 15];
+
         for i=1:size(boxes,1)
             % pre-compute angle data
             cot = cosd(theta(i));
@@ -242,62 +233,21 @@ rectangle('Position', AA(i).BoundingBox,'EdgeColor','r', 'linewidth', 2)
             Ic=imcrop(I_letters,[min(vx), min(vy), max(vx)-min(vx), max(vy)-min(vy)]);
             Ir=imrotate(Ic, theta(i));
 
-            % All the letters in the same direction
-            %if abs(size(Ir,1) - 55) > abs(size(Ir,2) - 55)
-            size(Ir)
-            %if abs(size(Ir,1) - 62) > abs(size(Ir,2) - 62)
+            % Fix size rectangles
             if small == i
                 disp('rotar')
                 Ir=imrotate(Ir, 90);
-            end
-            
-% % %             % Hay que ajustar más el tamaño de la ventana  
-% % %             %% V1
-% % %             if size(Ir,1) > size(Ir,1)
-% % %                 if hl(i) > hw(i)
-% % %                     df = hl(i); 
-% % %                     dc = hw(i);
-% % %                 else
-% % %                     dc = hl(i); 
-% % %                     df = hw(i);
-% % %                 end
-% % %             else
-% % %                 if hl(i) > hw(i)
-% % %                     dc = hl(i); 
-% % %                     df = hw(i);
-% % %                 else
-% % %                     df = hl(i); 
-% % %                     dc = hw(i);
-% % %                 end
-% % %             end
-% % %             vf = floor(size(Ir,1)/2) + [df -df];
-% % %             vc = floor(size(Ir,2)/2) + [dc -dc];
-%             size(Ic)
-            if(max(size(Ic)) < 65)
                 dc = 15;
-            else if(max(size(Ic)) > 100 )
+            elseif large == i && (boxes(large,6)/boxes(med,6) > 1.15)               
                     dc = 52;
-                else
+            else
                     dc = 40;
-                end
             end
             vf = floor(size(Ir,1)/2) + [df -df];
             vc = floor(size(Ir,2)/2) + [dc -dc];
             keys{i}=imcrop(Ir,[min(vc), min(vf), max(vc)-min(vc), max(vf)-min(vf)]);
             figure, imshow(keys{i})
-%             size(keys{i})
-            %% V2 - tamanho fijo
-% pause;
-%             vf = floor(size(Ir,1)/2) + [24 -24];
-%             vc = floor(size(Ir,2)/2) + [dc -dc];
-%             keys{i}=imcrop(Ir,[min(vc), min(vf), max(vc)-min(vc), max(vf)-min(vf)]);
-%             figure, imshow(keys{i})
-        end
-        
-        
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+        end 
            
     %% RECTANGULAR    
     elseif circularity < 1.8
@@ -336,7 +286,7 @@ message = sprintf('Im: %f, Circularity: %.3f, so the object is a rectangle', num
     end
     % uiwait(msgbox(message));
         
-    pause;
+%     pause;
 end
 
  cd ..

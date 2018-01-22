@@ -182,7 +182,6 @@ rectangle('Position', AA(i).BoundingBox,'EdgeColor','r', 'linewidth', 2)
                     boxes(i,:)=[];
                 end
             end
-            sum(sum(aux))
             % ONLY IN DEBUG MODE
             if PINTAR && nLabels > 0 
                 rgb = label2rgb(lbl, jet(nLabels), 'w', 'shuffle');
@@ -191,12 +190,6 @@ rectangle('Position', AA(i).BoundingBox,'EdgeColor','r', 'linewidth', 2)
             end
         end
         
-        % display result
-        if PINTAR
-            rgb = label2rgb(lbl, jet(nLabels), 'w', 'shuffle');
-            figure, imshow(I_edge), hold on;
-            drawOrientedBox(boxes, 'linewidth', 2);
-        end
         % Add area value
         boxes = [boxes  zeros(size(boxes,1),1)];
         for p=1:1:size(boxes,1)
@@ -247,6 +240,85 @@ rectangle('Position', AA(i).BoundingBox,'EdgeColor','r', 'linewidth', 2)
             vc = floor(size(Ir,2)/2) + [dc -dc];
             keys{i}=imcrop(Ir,[min(vc), min(vf), max(vc)-min(vc), max(vf)-min(vf)]);
             figure, imshow(keys{i})
+            
+            letras = {};
+            n=1;
+            for i=1:1:3
+                img=keys{i};
+                Ig = rgb2gray(img);
+                J1 = histeq(Ig);
+                K1 = wiener2(J1,[3 3]);
+                J2 = histeq(K1);
+                K2 = wiener2(J2,[3 3]);
+            %     figure,imshow(K2)
+                imgout = imadjust(K2,[0.03; 0.92],[0.00; 1.00],2.88);
+            %     figure,imshow(imgout)
+                thresholds = multithresh(imgout,8);            
+                [~,quantIndex] = imquantize(imgout,thresholds);
+                mask = ismember(quantIndex,[9]);   
+                Ibw = bwareaopen(mask, 4,4);
+                SE  = strel('Disk',1,4);
+                I_edge = imdilate(Ibw, SE);
+
+                % proyeccion sobre eje X
+                YProj = sum(I_edge,1);
+                figure,plot(YProj) 
+                % busca las caidas a cero
+                ind = find([0,diff((YProj == 0))>0] & (YProj == 0))
+                % elimina los valles de menos de 3 pixels
+                for k=size(ind,2):-1:1
+                    if sum(YProj(ind(k):min(ind(k)+3,size(YProj,2)))) > 0
+                        ind(k) = [];
+                    end
+                end
+
+                if size(keys{i},2) == 105 % 4 letras
+                    col = 1;
+                    while YProj(col) == 0
+                        col= col+1;
+                    end
+                    letras{n} = img(:,max(col-1,1):min(col+24,size(YProj,2)),:);
+                    figure,imshow(letras{n})
+                    n=n+1;
+                    for j=1:3
+                        col = ind(j);      
+                        while YProj(col) == 0
+                            col= col+1;
+                        end
+                        letras{n} = img(:,max(col-1,1):min(col+24,size(YProj,2)),:);
+                        figure,imshow(letras{n})
+                        n=n+1;
+                    end
+                elseif size(keys{i},2) == 81 % 3 letras
+                    col = 1;
+                    while YProj(col) == 0
+                        col= col+1;
+                    end
+                    letras{n} = img(:,max(col-1,1):min(col+24,size(YProj,2)),:);
+                    figure,imshow(letras{n})
+                    n=n+1;        
+                    for j=1:2
+                        col = ind(j);      
+                        while YProj(col) == 0
+                            col= col+1;
+                        end
+                        letras{n} = img(:,max(col-1,1):min(col+24,size(YProj,2)),:);
+                        figure,imshow(letras{n})
+                        n=n+1;
+                    end         
+                else % 1 letra
+                    col = 1;
+                    while YProj(col) == 0
+                        col = col+1;
+                    end
+                    letras{n} = img(:,max(col-1,1):min(col+24,size(YProj,2)),:);
+                    figure,imshow(letras{n})
+                    n=n+1;
+                end    
+            pause;
+            end
+
+
         end 
            
     %% RECTANGULAR    

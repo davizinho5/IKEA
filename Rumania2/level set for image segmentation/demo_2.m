@@ -9,11 +9,13 @@
 %         li_chunming@hotmail.com 
 % URL:  http://www.imagecomputing.org/~cmli/
 
-clear all;
-close all;
+% clear all;
+% close all;
 
 %Img = imread('twocells.bmp'); % real miscroscope image of cells
-Img = imread('segtool_1161.bmp');Img=Img*255;
+% Img = imread('segtool_1161.bmp');
+Img = mask;
+Img=Img*255;
 Img=double(Img(:,:,1));
 %% parameter setting
 timestep=5;  % time step

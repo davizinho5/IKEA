@@ -5,6 +5,10 @@ cd produs2/
 cd original
 
 PINTAR = 0;
+letras = {};
+n=1;
+          
+tic 
 
 %% Lista todos los archivos con la extension ".bag"
 filesBAG = dir('*.jpg');
@@ -222,8 +226,14 @@ rectangle('Position', AA(i).BoundingBox,'EdgeColor','r', 'linewidth', 2)
             % coordinates of box vertices
             vx = cx(i) + [-lc + ws; lc + ws ; lc - ws ; -lc - ws];
             vy = cy(i) + [-ls - wc; ls - wc ; ls + wc ; -ls + wc];
-
-            Ic=imcrop(I_letters,[min(vx), min(vy), max(vx)-min(vx), max(vy)-min(vy)]);
+            tam = [max(vx)-min(vx), max(vy)-min(vy)];
+            if max(tam) < 56
+                tam(find(tam==max(tam))) = 56;
+            end
+            if min(tam) < 53
+                tam(find(tam==min(tam))) = 53;
+            end
+            Ic=imcrop(I_letters,[max(min(vx),1), max(min(vy),1), tam(1), tam(2)]);
             Ir=imrotate(Ic, theta(i));
 
             % Fix size rectangles
@@ -238,94 +248,140 @@ rectangle('Position', AA(i).BoundingBox,'EdgeColor','r', 'linewidth', 2)
             end
             vf = floor(size(Ir,1)/2) + [df -df];
             vc = floor(size(Ir,2)/2) + [dc -dc];
-            keys{i}=imcrop(Ir,[min(vc), min(vf), max(vc)-min(vc), max(vf)-min(vf)]);
-            figure, imshow(keys{i})
-            
-            letras = {};
-            n=1;
-            for i=1:1:3
-                img=keys{i};
-                Ig = rgb2gray(img);
-                J1 = histeq(Ig);
-                K1 = wiener2(J1,[3 3]);
-                J2 = histeq(K1);
-                K2 = wiener2(J2,[3 3]);
-            %     figure,imshow(K2)
-                imgout = imadjust(K2,[0.03; 0.92],[0.00; 1.00],2.88);
-            %     figure,imshow(imgout)
-                thresholds = multithresh(imgout,8);            
-                [~,quantIndex] = imquantize(imgout,thresholds);
-                mask = ismember(quantIndex,[9]);   
-                Ibw = bwareaopen(mask, 4,4);
-                SE  = strel('Disk',1,4);
-                I_edge = imdilate(Ibw, SE);
+            keys{i}=imcrop(Ir,[max(min(vc),1), max(min(vf),1), max(vc)-min(vc), max(vf)-min(vf)]);
 
-                % proyeccion sobre eje X
-                YProj = sum(I_edge,1);
-                figure,plot(YProj) 
-                % busca las caidas a cero
-                ind = find([0,diff((YProj == 0))>0] & (YProj == 0))
-                % elimina los valles de menos de 3 pixels
-                for k=size(ind,2):-1:1
-                    if sum(YProj(ind(k):min(ind(k)+3,size(YProj,2)))) > 0
-                        ind(k) = [];
-                    end
-                end
+            %% Obtain indivisual letters studying the 
+            % projection of borders into X-axis
+            img=keys{i};
+            Ig = rgb2gray(img);
+            J1 = histeq(Ig);
+            K1 = wiener2(J1,[3 3]);
+            J2 = histeq(K1);
+            K2 = wiener2(J2,[3 3]);
+            % valores sacados de la APP
+            imgout = imadjust(K2,[0.03; 0.92],[0.00; 1.00],2.88);
+            thresholds = multithresh(imgout,8);            
+            [~,quantIndex] = imquantize(imgout,thresholds);
+            mask = ismember(quantIndex,[9]);   
+            Ibw = bwareaopen(mask, 4,4);
+            SE  = strel('Disk',1,4);
+            I_edge = imdilate(Ibw, SE);
 
-                if size(keys{i},2) == 105 % 4 letras
-                    col = 1;
-                    while YProj(col) == 0
-                        col= col+1;
-                    end
-                    letras{n} = img(:,max(col-1,1):min(col+24,size(YProj,2)),:);
-                    figure,imshow(letras{n})
-                    n=n+1;
-                    for j=1:3
-                        col = ind(j);      
-                        while YProj(col) == 0
-                            col= col+1;
-                        end
-                        letras{n} = img(:,max(col-1,1):min(col+24,size(YProj,2)),:);
-                        figure,imshow(letras{n})
-                        n=n+1;
-                    end
-                elseif size(keys{i},2) == 81 % 3 letras
-                    col = 1;
-                    while YProj(col) == 0
-                        col= col+1;
-                    end
-                    letras{n} = img(:,max(col-1,1):min(col+24,size(YProj,2)),:);
-                    figure,imshow(letras{n})
-                    n=n+1;        
-                    for j=1:2
-                        col = ind(j);      
-                        while YProj(col) == 0
-                            col= col+1;
-                        end
-                        letras{n} = img(:,max(col-1,1):min(col+24,size(YProj,2)),:);
-                        figure,imshow(letras{n})
-                        n=n+1;
-                    end         
-                else % 1 letra
-                    col = 1;
-                    while YProj(col) == 0
-                        col = col+1;
-                    end
-                    letras{n} = img(:,max(col-1,1):min(col+24,size(YProj,2)),:);
-                    figure,imshow(letras{n})
-                    n=n+1;
-                end    
-            pause;
+            % X-axis projection
+            YProj = sum(I_edge,1);
+%             figure,plot(YProj) 
+            % Look for data falling to zero
+            ind = find([0,diff((YProj == 0))>0] & (YProj == 0));
+            % eliminate last pixels valley
+            if (sum(YProj(ind(size(ind,2)):size(YProj,2))) == 0) || (ind(size(ind,2)) > (size(ind,2)-15))
+                ind(size(ind,2))=[];
             end
 
-
+            if size(keys{i},2) == 105 % 4 letras     
+                % If there are more valleys than necessary
+                while size(ind,2) > 3
+                    % eliminate the smallest valley
+                    sum_ind = [];
+                    for valley = 1:1:size(ind,2)
+                        p=ind(valley);
+                        while YProj(p) == 0
+                            p=p+1;
+                        end
+                        sum_ind(valley) = p - ind(valley);
+                    end
+                    if sum(sum_ind==min(sum_ind)) == 1
+                        [a b]=min(sum_ind);
+                    else
+                        edge_ind=[];
+                        for t=1:size(sum_ind,2)
+                            edge_ind(t) = min(abs(ind(t)-1),abs(ind(t)-size(YProj,2)))*(sum_ind(t)==min(sum_ind));
+                        end
+                        edge_ind(find(edge_ind==0)) = size(YProj,2);
+                        [a b]=min(edge_ind);
+                    end
+                    ind(b) = [];
+                end            
+                
+                % First letter
+                col = 1;
+                while YProj(col) == 0
+                    col= col+1;
+                end
+                letras{n} = img(:,max(col-1,1):min(max(col-1,1)+25,size(YProj,2)),:);
+%                 figure,imshow(letras{n})
+                n=n+1;
+                % next letters
+                for j=1:3
+                    col = ind(j);      
+                    while YProj(col) == 0
+                        col= col+1;
+                    end
+                    letras{n} = img(:,max(col-1,1):min(max(col-1,1)+25,size(YProj,2)),:);
+%                     figure,imshow(letras{n})
+                    n=n+1;
+                end
+            % 3 letras
+            elseif size(keys{i},2) > 70 %== 81 
+                % If there are more valleys than necessary
+                while size(ind,2) > 2
+                   % eliminate the smallest valley
+                    sum_ind = [];
+                    for valley = 1:1:size(ind,2)
+                        p=ind(valley);
+                        while YProj(p) == 0
+                            p=p+1;
+                        end
+                        sum_ind(valley) = p - ind(valley);
+                    end
+                    if sum(sum_ind==min(sum_ind)) == 1
+                        [a b]=min(sum_ind);
+                    else
+                        edge_ind=[];
+                        for t=1:size(sum_ind,2)
+                            edge_ind(t) = min(abs(ind(t)-1),abs(ind(t)-size(YProj,2)))*(sum_ind(t)==min(sum_ind));
+                        end
+                        edge_ind(find(edge_ind==0)) = size(YProj,2);
+                        [a b]=min(edge_ind);
+                    end
+                    ind(b) = [];
+                end                       
+               
+                % First letter
+                col = 1;
+                while YProj(col) == 0
+                    col= col+1;
+                end
+                letras{n} = img(:,max(col-1,1):min(max(col-1,1)+25,size(YProj,2)),:);
+%                 figure,imshow(letras{n})
+                n=n+1;  
+                % next letters
+                for j=1:2
+                    col = ind(j);      
+                    while YProj(col) == 0
+                        col= col+1;
+                    end
+                    letras{n} = img(:,max(col-1,1):min(max(col-1,1)+25,size(YProj,2)),:);
+%                     figure,imshow(letras{n})
+                    n=n+1;
+                end    
+            % 1 letra    
+            else 
+                col = 1;
+                while YProj(col) == 0
+                    col = col+1;
+                end
+                letras{n} = img(:,max(col-1,1):min(max(col-1,1)+25,size(YProj,2)),:);
+%                 figure,imshow(letras{n})
+                n=n+1;
+            end    
+%             pause;
         end 
            
     %% RECTANGULAR    
     elseif circularity < 1.8
 message = sprintf('Im: %f, Circularity: %.3f, so the object is a rectangle', num_file, circularity);
         disp(message);
-        % Orientar
+        Orientar
         Ibw = imcrop(Ibw,Asorted(1).BoundingBox);
         Ibw = imfill(Ibw,'holes');
         [Gmag, Gdir] = imgradient(Ibw,'sobel');
@@ -364,4 +420,6 @@ end
  cd ..
  cd ..
  cd ..
+ 
+ toc
  

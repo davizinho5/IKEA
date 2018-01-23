@@ -1,1 +1,0 @@
-Please run the Number_Plate_Reader.fig on Matlab command window.

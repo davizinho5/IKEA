@@ -1,6 +1,9 @@
 
 cd fotos21dec17/
+% De momento, solo funciona con produs 2
 % cd produs1/
+% cd produs3/
+% cd produs4/
 cd produs2/
 cd original
 
@@ -58,7 +61,7 @@ for num_file = 1:length(filesBAG)
 disp(filesBAG(num_file).name)        
 num_file
 % message = sprintf('Im: %, Circularity: %.3f, so the object is a rectangle', num_file, circularity);
-%         disp(message);
+% disp(message);
 
         % Recortar - plato circular (1689*1686)
         I1 = imcrop(I,Asorted(1).BoundingBox);
@@ -142,7 +145,7 @@ num_file
             figure(10),clf, subplot(2,1,1), imshow(Ic), ...
                 subplot(2,1,2), imshow(I_edge), hold on, ...
                 for i = 1:size(AA,1)
-rectangle('Position', AA(i).BoundingBox,'EdgeColor','r', 'linewidth', 2)
+                    rectangle('Position', AA(i).BoundingBox,'EdgeColor','r', 'linewidth', 2)
                 end
             hold off
         end
@@ -269,14 +272,18 @@ rectangle('Position', AA(i).BoundingBox,'EdgeColor','r', 'linewidth', 2)
 
             % X-axis projection
             YProj = sum(I_edge,1);
-%             figure,plot(YProj) 
+            if PINTAR
+                figure,plot(YProj) 
+            end
             % Look for data falling to zero
             ind = find([0,diff((YProj == 0))>0] & (YProj == 0));
             % eliminate last pixels valley
             if (sum(YProj(ind(size(ind,2)):size(YProj,2))) == 0) || (ind(size(ind,2)) > (size(ind,2)-15))
                 ind(size(ind,2))=[];
             end
-
+            
+            FileName = strcat(num2str(n),'.png');
+            % Length as an indicator of the number of letters
             if size(keys{i},2) == 105 % 4 letras     
                 % If there are more valleys than necessary
                 while size(ind,2) > 3
@@ -308,7 +315,12 @@ rectangle('Position', AA(i).BoundingBox,'EdgeColor','r', 'linewidth', 2)
                     col= col+1;
                 end
                 letras{n} = img(:,max(col-1,1):min(max(col-1,1)+25,size(YProj,2)),:);
-%                 figure,imshow(letras{n})
+                if PINTAR
+                    figure,imshow(letras{n})
+                end
+                bw = letras{n};
+                imwrite(bw(:,:,1), FileName);
+                pause;
                 n=n+1;
                 % next letters
                 for j=1:3
@@ -317,7 +329,12 @@ rectangle('Position', AA(i).BoundingBox,'EdgeColor','r', 'linewidth', 2)
                         col= col+1;
                     end
                     letras{n} = img(:,max(col-1,1):min(max(col-1,1)+25,size(YProj,2)),:);
-%                     figure,imshow(letras{n})
+                    bw = letras{n};
+                    imwrite(bw(:,:,1), FileName);
+                    pause;
+                    if PINTAR
+                        figure,imshow(letras{n})
+                    end
                     n=n+1;
                 end
             % 3 letras
@@ -352,7 +369,12 @@ rectangle('Position', AA(i).BoundingBox,'EdgeColor','r', 'linewidth', 2)
                     col= col+1;
                 end
                 letras{n} = img(:,max(col-1,1):min(max(col-1,1)+25,size(YProj,2)),:);
-%                 figure,imshow(letras{n})
+                if PINTAR
+                    figure,imshow(letras{n})
+                end
+                bw = letras{n};
+                imwrite(bw(:,:,1), FileName);
+                pause;
                 n=n+1;  
                 % next letters
                 for j=1:2
@@ -361,7 +383,12 @@ rectangle('Position', AA(i).BoundingBox,'EdgeColor','r', 'linewidth', 2)
                         col= col+1;
                     end
                     letras{n} = img(:,max(col-1,1):min(max(col-1,1)+25,size(YProj,2)),:);
-%                     figure,imshow(letras{n})
+                    if PINTAR
+                        figure,imshow(letras{n})
+                    end
+                    bw = letras{n};
+                    imwrite(bw(:,:,1), FileName);
+                    pause;
                     n=n+1;
                 end    
             % 1 letra    
@@ -371,10 +398,14 @@ rectangle('Position', AA(i).BoundingBox,'EdgeColor','r', 'linewidth', 2)
                     col = col+1;
                 end
                 letras{n} = img(:,max(col-1,1):min(max(col-1,1)+25,size(YProj,2)),:);
-%                 figure,imshow(letras{n})
+                if PINTAR
+                    figure,imshow(letras{n})
+                end
+                bw = letras{n};
+                imwrite(bw(:,:,1), FileName);
+                pause;
                 n=n+1;
             end    
-%             pause;
         end 
            
     %% RECTANGULAR    

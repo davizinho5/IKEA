@@ -1,4 +1,6 @@
-%% Lista todos los archivos con la extension ".bag"
+% Pone a todos los archivos un nombre con un numero creciente
+
+%% Lista todos los archivos con la extension ".jpg"
 filesBAG = dir('*.jpg');
 
 %%  Renombra los archivos en el directorio

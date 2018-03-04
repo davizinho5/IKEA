@@ -70,7 +70,7 @@ layers = [imageInputLayer([53 26 1])
           convolution2dLayer([7,5],26)
           reluLayer
           maxPooling2dLayer(2,'Stride',2)
-          fullyConnectedLayer(16)
+          fullyConnectedLayer(18)
           softmaxLayer
           classificationLayer()]; 
       %imageInputLayer([53 26 1]) ->tamanho

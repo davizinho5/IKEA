@@ -444,14 +444,62 @@ message = sprintf('Im: %f, Circularity: %.3f, so the object is a rectangle', num
         [label, score] = classify(convnet,grayIm(:,:,1));
         labels = [labels label];
         scores = [scores max(score)];
+    end  
+    % g1
+    count=0;
+    g=char(labels(1:groups(1)));
+    for p=1:1:size(g,1)
+        if ( (strcmp('1r',g(p,:))) || (strcmp('2r',g(p,:))) || ...
+             (strcmp('3r',g(p,:))) || (strcmp('4r',g(p,:))) || ...
+             (strcmp('5r',g(p,:))) || (strcmp('6r',g(p,:))) || ...    
+             (strcmp('7r',g(p,:))) || (strcmp('8r',g(p,:))) || ...
+             (strcmp('9r',g(p,:))) )
+            count=count+1;
+            g1(p,)= g(p,1)
+        end
     end
+    if count > (size(g1,2)/2)
+       g1=fliplr(g1)
+    end
+    pause;
+    % g2
+    count=0;
+    g=char(labels(1+groups(1):groups(1)+groups(2)));
+    for p=1:1:size(g,1)
+        if ( (strcmp('1r',g(p,:))) || (strcmp('2r',g(p,:))) || ...
+             (strcmp('3r',g(p,:))) || (strcmp('4r',g(p,:))) || ...
+             (strcmp('5r',g(p,:))) || (strcmp('6r',g(p,:))) || ...    
+             (strcmp('7r',g(p,:))) || (strcmp('8r',g(p,:))) || ...
+             (strcmp('9r',g(p,:))) )
+            count=count+1;
+            g2(p)= g(p,1);            
+        end
+    end
+    if count > (size(g2,2)/2)
+        g2=fliplr(g2);
+    end
+    % g3
+    count=0;
+    g=char(labels(1+groups(1)+groups(2):groups(1)+groups(2)+groups(3)));
+    for p=1:1:size(g,1)
+        if ( (strcmp('1r',g(p,:))) || (strcmp('2r',g(p,:))) || ...
+             (strcmp('3r',g(p,:))) || (strcmp('4r',g(p,:))) || ...
+             (strcmp('5r',g(p,:))) || (strcmp('6r',g(p,:))) || ...    
+             (strcmp('7r',g(p,:))) || (strcmp('8r',g(p,:))) || ...
+             (strcmp('9r',g(p,:))) )
+            count=count+1;
+            g3(p)= g(p,1);
+        end
+    end   
+    if count > (size(g3,2)/2)
+        g3=fliplr(g3);
+    end
+    
     message = sprintf('Letters from file %d', num_file);  
     disp(message)
-    g1=labels(1:groups(1));
-    g2=labels(1+groups(1):groups(1)+groups(2));
-    g3=labels(1+groups(1)+groups(2):groups(1)+groups(2)+groups(3));
-    
-    
+    g1
+    g2 
+    g3
 end
 
  cd ..

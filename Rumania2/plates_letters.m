@@ -1,23 +1,26 @@
+%% Script for processing the photos taken of the product number 2
+%% Pre-processing
 
+% Include actual folder in the matlab path
+addpath(pwd);
+
+% Load pre-trained Convolutional Neural Network
 load('trained_CNN.mat');
 
+% Navigate to the photos
 cd fotos21dec17/
-% De momento, solo funciona con produs 2
-% cd produs1/
-% cd produs3/
-% cd produs4/
 cd produs2/
 cd original
 
+% Choose to plot the results
 PLOT = 0;
          
-tic 
+%% Read and iterate through the photos
 
-%% Lista todos los archivos con la extension ".bag"
 files = dir('*.jpg');
-% Ciclo para cada archivo
 for num_file = 1:length(files) 
 
+    % Read the file
     I = imread(files(num_file).name);  
     if PLOT
         figure, imshow(I)
@@ -55,17 +58,19 @@ for num_file = 1:length(files)
         rectangle('position',Asorted(1).BoundingBox,'edgecolor','r','linewidth',2);
         hold off
     end
-
-    %% Choose between circular and square plates
-    % Compute circularity
+%%           Choose between circular and square plates
+%            Compute circularity
+%%
     circularity = Asorted(1).Perimeter^2 / (4 * pi * [Asorted(1).Area]);
-    %% CIRCULAR    
+%% CIRCULAR case
+%%
     if circularity  < 1.15
         disp(files(num_file).name)        
                 
         % Cut circular plates (1689*1686)
         I1 = imcrop(I,Asorted(1).BoundingBox);
-        %% FIX SIZE [XMIN YMIN WIDTH HEIGHT]
+        
+        % fix size Bouondng Box [Xmin Ymin Width Weight]
         BB = [330 330 1020 1020]; 
         Ic = imcrop(I1, BB);    
         if PLOT
@@ -75,7 +80,7 @@ for num_file = 1:length(files)
         % to black and white
         Ibw = im2bw(rgb2gray(Ic),graythresh(rgb2gray(Ic)));
 
-        % find inner cilcle
+        % find inner circle
         stats = regionprops('table',Ibw,'Centroid','MajorAxisLength','MinorAxisLength');
         diameters = mean([stats.MajorAxisLength stats.MinorAxisLength],2);
         big_diam = diameters(diameters > 950,:);
@@ -94,7 +99,7 @@ for num_file = 1:length(files)
             viscircles(center_image,big_diam(ind)/2) , hold off
         end
         
-        % choose by radius
+        % Choose found circles by radius
         radii = big_diam(ind)/2;
         rad_offset = 25;
         if radii > 500
@@ -128,7 +133,7 @@ for num_file = 1:length(files)
         maxX=0;
         maxY=0;
         for ii=size(stats,1):-1:1
-            if (stats(ii).Area > 18000) % (stats(ii).Area < 1500) ||(stats(ii).Area > 5400) 
+            if (stats(ii).Area > 18000) 
                 Acell(:,ii)=[];
             else
                 minX=min(stats(ii).BoundingBox(1),minX);
@@ -138,8 +143,8 @@ for num_file = 1:length(files)
             end
         end
         AA = cell2struct(Acell, Afields, 1);
-       
-        %% Cut around letters [XMIN YMIN WIDTH HEIGHT]
+
+        % Cut around letters [Xmin Ymin Width Weight]
         I_letters=imcrop(Ic, [minX minY (maxX-minX) (maxY-minY)]);
         if PLOT
             figure, imshow(I_letters)              
@@ -179,13 +184,12 @@ for num_file = 1:length(files)
             aux = zeros(size(I_edge) + [2 2]);
             aux(2:size(I_edge,1)+1,2:size(I_edge,2)+1) = I_edge;
             I_edge = aux;
-                        
-            %% Oriented Boxes
+            
             % compute image labels, using minimal connectivity
             lbl = bwlabel(I_edge, 4);
             nLabels = max(lbl(:));
-
-            %% Compute enclosing oriented boxes
+            
+            % Compute enclosing oriented boxes
             boxes = imOrientedBox(lbl);
             % Filter the boxes by the expected area
             for i=size(boxes,1):-1:1 
@@ -259,9 +263,8 @@ for num_file = 1:length(files)
             vf = floor(size(Ir,1)/2) + [df -df];
             vc = floor(size(Ir,2)/2) + [dc -dc];
             keys{i}=imcrop(Ir,[max(min(vc),1), max(min(vf),1), max(vc)-min(vc), max(vf)-min(vf)]);
-
-            %% Segment indivisual letters studying the 
-            % projection of borders into X-axis
+            
+            % Segment indivisual letters studying the projection of borders into X-axis
             img=keys{i};
             Ig = rgb2gray(img);
             J1 = histeq(Ig);
@@ -399,13 +402,13 @@ for num_file = 1:length(files)
                 end              
                 n=n+1;
             end    
-        end 
-           
-    %% RECTANGULAR    
+        end
+%% RECTANGULAR case
+
     elseif circularity < 1.8
-message = sprintf('Im: %f, Circularity: %.3f, so the object is a rectangle', num_file, circularity);
+        message = sprintf('Im: %f, Circularity: %.3f, so the object is a rectangle', num_file, circularity);
         disp(message);
-        Orientar
+        % Orientate the image
         Ibw = imcrop(Ibw,Asorted(1).BoundingBox);
         Ibw = imfill(Ibw,'holes');
         [Gmag, Gdir] = imgradient(Ibw,'sobel');
@@ -420,8 +423,8 @@ message = sprintf('Im: %f, Circularity: %.3f, so the object is a rectangle', num
         %  Recortar (922*1840) y Rotar
         I_crop = imcrop(I,Asorted(1).BoundingBox);
         I_rot = imrotate(I_crop,angle);
-
-     %% FIJO [XMIN YMIN WIDTH HEIGHT]
+        
+        % Cut fix size [Xmin Ymin Width Weight]
         BB = [155 180 490 610; 670 180 490 610; 1210 180 490 610]; 
         Ic1 = imcrop(I_rot, BB(1,:));
         Ic2 = imcrop(I_rot, BB(2,:));
@@ -504,6 +507,3 @@ end
  cd ..
  cd ..
  cd ..
- 
- toc
- 

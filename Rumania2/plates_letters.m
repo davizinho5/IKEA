@@ -440,6 +440,7 @@ for num_file = 1:length(files)
         message = sprintf('Wrong detection');
     end
     
+    %% Recognition of letters
     labels=[];  
     scores=[];
     for m = 1:1:size(letters,2)

@@ -22,13 +22,13 @@ digitData = imageDatastore(digitDatasetPath, ...
 % training of a convolutional neural network.
 
 %% 
-% Display some of the images in the datastore. 
-figure;
-perm = randperm(120,20);
-for i = 1:20
-    subplot(4,5,i);
-    imshow(digitData.Files{perm(i)});
-end
+% % % % % Display some of the images in the datastore. 
+% % % % figure;
+% % % % perm = randperm(120,20);
+% % % % for i = 1:20
+% % % %     subplot(4,5,i);
+% % % %     imshow(digitData.Files{perm(i)});
+% % % % end
 
 %%
 % Check the number of images in each category. 
@@ -150,8 +150,12 @@ layers = [imageInputLayer([53 26 1])
 % descent with momentum. Set the maximum number of epochs at 15 (an epoch
 % is a full training cycle on the whole training data), and start the
 % training with an initial learning rate of 0.0001.
-options = trainingOptions('sgdm','MaxEpochs',100, ...
-	'InitialLearnRate',0.0001);  
+options = trainingOptions('sgdm',...
+    'MaxEpochs',20, ...
+	'InitialLearnRate',0.002,...
+    'ValidationData',{trainDigitData,testDigitData},...
+    'ValidationFrequency',2,...    
+    'Plots','training-progress');  
 
 %% Train the Network Using Training Data
 % Train the network you defined in layers, using the training data and the
@@ -190,10 +194,12 @@ TTest = testDigitData.Labels;
 
 %% 
 % Calculate the accuracy. 
-accuracy = sum(YTest == TTest)/numel(TTest)   
+accuracy = sum(YTest == TTest)/numel(TTest)  
+build_corr_mat;
 
 %%
 % Accuracy is the ratio of the number of true labels in the test data
 % matching the classifications from classify, to the number of images in
 % the test data. In this case about 98% of the digit estimations match the
 % true digit values in the test set.
+

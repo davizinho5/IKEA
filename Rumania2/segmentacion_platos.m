@@ -275,6 +275,7 @@ num_file
             if PINTAR
                 figure,plot(YProj) 
             end
+            pause;
             % Look for data falling to zero
             ind = find([0,diff((YProj == 0))>0] & (YProj == 0));
             % eliminate last pixels valley

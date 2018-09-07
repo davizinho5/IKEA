@@ -1,0 +1,19 @@
+
+% This example shows how to visualize the features learned by convolutional neural networks.
+
+% Convolutional neural networks use features to classify images. The network learns these features itself during the training process. What the network learns during training is sometimes unclear. However, you can use the deepDreamImage function to visualize the features learned.
+
+% The convolutional layers of a network output multiple 2-D arrays. Each array (or channel) corresponds to a filter applied to the layer input. The channels output by fully connected layers correspond to high-level combinations of the features learned by earlier layers.
+
+% You can visualize what the learned features look like by using deepDreamImage to generate images that strongly activate a particular channel of the network layers.
+
+%% Load Pretrained Network and Data
+load('trained_CNN.mat')
+
+convnet.Layers
+
+%% Features on Convolutional Layer 1
+Set layer to be the first convolutional layer. This layer is the second layer in the network and is named 'conv1'.
+
+layer = 2;
+name = net.Layers(layer).Name

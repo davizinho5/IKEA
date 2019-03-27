@@ -1,17 +1,12 @@
+cd ..
 
 cd fotos21dec17/
-% De momento, solo funciona con produs 2
 cd produs1/
-% cd produs3/
-% cd produs4/
-% cd produs2/
 cd original
 
-PINTAR = 1;
+PINTAR = 0;
 letras = {};
 n=1;
-          
-tic 
 
 %% Lista todos los archivos con la extension ".bag"
 filesBAG = dir('*.jpg');
@@ -24,12 +19,16 @@ for num_file = 1:length(filesBAG)
     if PINTAR
         figure, imshow(I)
     end
-    
+% end
     %% Elegir circulo y rectangulos
     Ibw = im2bw(Ig,graythresh(Ig));
+%     figure, imshow(Ibw)
     Ibw2 = bwareaopen(Ibw, 80, 8);
+%     figure, imshow(Ibw2)
     SE = strel('disk',4);
     Ibw2 = imerode(Ibw2,SE);
+%     figure, imshow(Ibw2)
+%     pause;
     
     stats = regionprops(Ibw2,'boundingbox','Area','Perimeter');
     % Se ordenan por AREA 
@@ -94,6 +93,7 @@ num_file
             viscircles(center_image,big_diam(ind)/2) , hold off
         end
         
+        % Coger circulo interior + offset
         radii = big_diam(ind)/2;
         rad_offset = 25;
         if radii > 500
@@ -105,6 +105,9 @@ num_file
                     Ic(i,j,:) = 255;                   
                 end
             end
+        end
+        if PINTAR
+            figure, imshow(Ic) , hold off
         end
 
         % Find Letters Area        
@@ -118,7 +121,7 @@ num_file
         SE  = strel('Disk',10,4);
         I_edge = imdilate(I_edge, SE);
                               
-        stats = regionprops(I_edge, 'Area','BoundingBox','Orientation');
+        stats = regionprops(I_edge, 'Area','BoundingBox','Orientation','MinorAxisLength');
         Afields = fieldnames(stats);
         Acell = struct2cell(stats);
         minX=size(Ic,1);
@@ -126,7 +129,7 @@ num_file
         maxX=0;
         maxY=0;
         for ii=size(stats,1):-1:1
-            if (stats(ii).Area > 18000) % (stats(ii).Area < 1500) ||(stats(ii).Area > 5400) 
+            if (stats(ii).Area >5000) % (stats(ii).Area < 1500) ||(stats(ii).Area > 5400) 
                 Acell(:,ii)=[];
             else
                 minX=min(stats(ii).BoundingBox(1),minX);
@@ -237,16 +240,12 @@ num_file
                 tam(find(tam==min(tam))) = 53;
             end
             Ic=imcrop(I_letters,[max(min(vx),1), max(min(vy),1), tam(1), tam(2)]);
-            figure, imshow(Ic)
             Ir=imrotate(Ic, theta(i));
-            figure, imshow(Ir)
-            
+
             % Fix size rectangles
             if small == i
                 disp('rotar')
-                figure, imshow(Ir)
                 Ir=imrotate(Ir, 90);
-                figure, imshow(Ir)
                 dc = 15;
             elseif large == i && (boxes(large,6)/boxes(med,6) > 1.15)               
                     dc = 52;
@@ -279,7 +278,7 @@ num_file
             if PINTAR
                 figure,plot(YProj) 
             end
-            pause;
+            
             % Look for data falling to zero
             ind = find([0,diff((YProj == 0))>0] & (YProj == 0));
             % eliminate last pixels valley
@@ -325,7 +324,7 @@ num_file
                 end
                 bw = letras{n};
                 imwrite(bw(:,:,1), FileName);
-                pause;
+                
                 n=n+1;
                 % next letters
                 for j=1:3
@@ -336,7 +335,7 @@ num_file
                     letras{n} = img(:,max(col-1,1):min(max(col-1,1)+25,size(YProj,2)),:);
                     bw = letras{n};
                     imwrite(bw(:,:,1), FileName);
-                    pause;
+                    
                     if PINTAR
                         figure,imshow(letras{n})
                     end
@@ -379,7 +378,7 @@ num_file
                 end
                 bw = letras{n};
                 imwrite(bw(:,:,1), FileName);
-                pause;
+                
                 n=n+1;  
                 % next letters
                 for j=1:2
@@ -393,7 +392,7 @@ num_file
                     end
                     bw = letras{n};
                     imwrite(bw(:,:,1), FileName);
-                    pause;
+                   
                     n=n+1;
                 end    
             % 1 letra    
@@ -408,7 +407,7 @@ num_file
                 end
                 bw = letras{n};
                 imwrite(bw(:,:,1), FileName);
-                pause;
+                
                 n=n+1;
             end    
         end 
@@ -432,30 +431,174 @@ message = sprintf('Im: %f, Circularity: %.3f, so the object is a rectangle', num
         %  Recortar (922*1840) y Rotar
         I_crop = imcrop(I,Asorted(1).BoundingBox);
         I_rot = imrotate(I_crop,angle);
+%         pause;
+        I_gray=rgb2gray(I_rot);
+        I_gray2=imadjust(I_gray);
+        I_bordes=edge(I_gray2,'canny',0.11,2);
+        SE  = strel('Disk',6,4);
+        I_bordes = imdilate(I_bordes, SE);
+        if PINTAR
+            figure,imshow(I_gray);
+            figure,imshow(I_gray2);
+            figure,imshow(I_bordes);
+            figure,imshow(I_bordes);
+        end
+        regions = regionprops(I_bordes, 'Area','BoundingBox','Orientation','MinorAxisLength','MajorAxisLength');
+        Afields = fieldnames(regions);
+        Cell = struct2cell(regions);
+       
+        A1 = cell2struct(Cell, Afields, 1);
+        for j=size(regions,1):-1:1
+            if (regions(j).Area <20000)
+                    Cell(:,j)=[];
+            end
+        end
+        A1 = cell2struct(Cell, Afields, 1);
+    
+        for i = 1:size(A1,1)
+          rectangle('Position', A1(i).BoundingBox,'EdgeColor','r', 'linewidth', 2)
+        end
+      
+        I_small=imcrop(I_rot,A1(2).BoundingBox);
+    
+%          pause;
 
-     %% FIJO [XMIN YMIN WIDTH HEIGHT]
-        BB = [155 180 490 610; 670 180 490 610; 1210 180 490 610]; 
-        Ic1 = imcrop(I_rot, BB(1,:));
-        Ic2 = imcrop(I_rot, BB(2,:));
-        Ic3 = imcrop(I_rot, BB(3,:));
-        figure,imshow(I_rot), hold on;
-        rectangle('position', BB(1,:),'edgecolor','r','linewidth',2);
-        rectangle('position', BB(2,:),'edgecolor','b','linewidth',2);
-        rectangle('position', BB(3,:),'edgecolor','g','linewidth',2);
-        hold off;
-        figure,subplot(1,3,1),imshow(Ic1),subplot(1,3,2),imshow(Ic2),subplot(1,3,3),imshow(Ic3);
-  
-    else
-        message = sprintf('Wrong detection');
+   
+        
+        %% FIJO [XMIN YMIN WIDTH HEIGHT]
+        BB = [62 90 435 540;602 90 435 540; 1122 90 435 540]; 
+        Ic1 = imcrop(I_small, BB(1,:));
+        Ic2 = imcrop(I_small, BB(2,:));
+        Ic3 = imcrop(I_small, BB(3,:));
+        if PINTAR
+            figure,imshow(I_small), hold on;
+            rectangle('position', BB(1,:),'edgecolor','r','linewidth',2);
+            rectangle('position', BB(2,:),'edgecolor','b','linewidth',2);
+            rectangle('position', BB(3,:),'edgecolor','g','linewidth',2);
+            hold off;
+            
+            figure,subplot(1,3,1),imshow(Ic1),subplot(1,3,2),imshow(Ic2),subplot(1,3,3),imshow(Ic3);
+        end
+          
+        
+        images=struct('Imagen1',Ic1,'Imagen2',Ic2,'Imagen3',Ic3);
+        nombres=["Imagen1","Imagen2","Imagen3"];
+        b=1;
+       
+        %%%%%%%%%
+%          % Find Letters Area 
+        Acell=0;
+        while size(Acell,2)<3 
+      
+        G=rgb2gray(images.(nombres(b)));   
+        G2=imadjust(G);
+%         pause;
+        I_edge=edge(G2,'canny',0.54,2);
+        if PINTAR
+            figure,imshow(I_edge); 
+        end
+        SE  = strel('Disk',6,4);
+        I_edge3 = imdilate(I_edge, SE);
+        if PINTAR
+            figure,imshow(I_edge3);
+        end
+%         pause;
+     
+        stats = regionprops(I_edge3, 'Area','BoundingBox','Orientation','MinorAxisLength','MajorAxisLength');
+        Afields = fieldnames(stats);
+        Acell = struct2cell(stats);
+        minX=size(images.(nombres(b)),1);
+        minY=size(images.(nombres(b)),2);
+        maxX=0;
+        maxY=0;
+      
+        for ii=size(stats,1):-1:1
+            if (stats(ii).Area <1000)||(stats(ii).MinorAxisLength<28)||(stats(ii).Area >15000)||(stats(ii).MajorAxisLength>300)
+                    Acell(:,ii)=[];
+              
+            else
+                minX=min(stats(ii).BoundingBox(1),minX);
+                minY=min(stats(ii).BoundingBox(2),minY);
+                maxX=max(stats(ii).BoundingBox(1)+stats(ii).BoundingBox(3),maxX);
+                maxY=max(stats(ii).BoundingBox(2)+stats(ii).BoundingBox(4),maxY);
+            end
+        end
+      
+        AA = cell2struct(Acell, Afields, 1);
+        if PINTAR
+           figure, imshow(images.(nombres(b))), hold on
+            for i = 1:size(AA,1)
+              rectangle('Position', AA(i).BoundingBox,'EdgeColor','r', 'linewidth', 2)
+            end
+        end
+%         pause;
+          I_letters=imcrop(images.(nombres(b)), [minX minY (maxX-minX) (maxY-minY)]);
+        if PINTAR
+            figure, imshow(I_letters)              
+            figure(20),clf, imshow(I_letters)
+            figure(10),clf, subplot(2,1,1), imshow(images.(nombres(b))), ...
+                subplot(2,1,2), imshow(I_edge3), hold on, ...
+                for i = 1:size(AA,1)
+                    rectangle('Position', AA(i).BoundingBox,'EdgeColor','r', 'linewidth', 2)
+                end
+            hold off
+        end
+        b=b+2;
+        end
+    
+        I_letters2=imrotate(I_letters,90);
+        I_gray=rgb2gray(I_letters2);
+        I_gray2=imadjust(I_gray);
+        I_bordes=edge(I_gray2,'canny',0.51,2);
+        if PINTAR
+            figure,imshow(I_bordes);
+        end
+        SE  = strel('Disk',9,4);
+        I_bordes = imdilate(I_bordes, SE);
+        if PINTAR
+            figure,imshow(I_bordes);
+        end
+        stats3 = regionprops(I_bordes, 'Area','BoundingBox','Orientation','MinorAxisLength','MajorAxisLength');
+        Afields3 = fieldnames(stats3);
+        Acell3 = struct2cell(stats3);
+        AA3 = cell2struct(Acell3, Afields3, 1);
+        if PINTAR
+            figure, imshow(I_bordes), hold on
+            for i = 1:size(AA3,1)
+              rectangle('Position', AA3(i).BoundingBox,'EdgeColor','r', 'linewidth', 2)
+            end
+        end
+        Box1=imcrop(I_letters2,AA3(1).BoundingBox);
+        Box2=imcrop(I_letters2,AA3(2).BoundingBox);
+        Box3=imcrop(I_letters2,AA3(3).BoundingBox);
+        figure,imshow(Box3), hold on
+        figure,imshow(Box2), hold on
+        figure,imshow(Box1), hold on
+
+        % Primer Grupo 6 letras
+%         I_gray=rgb2gray(Box1);
+%         I_gray2=imadjust(I_gray);
+%         I_bordes=edge(I_gray2,'canny',0.32,2);
+%         I_bordes = bwareaopen(I_bordes, 10,4);
+%         figure,imshow(I_bordes);
+%         pause;
+%         SE = strel('Disk',1,4);
+%         I_bordes = imdilate(I_bordes, SE);
+%         figure,imshow(I_bordes);
+% Box2_rec = Box2(7:59,11:36,1);
+% red=convnet;
+% layers=convnet.Layers;
+% letras_red=classify(red,Box2_rec);
+
+      pause;
     end
     % uiwait(msgbox(message));
-        
-%     pause;
+       
+   
+%  cd ..
+%  cd ..
+%  cd ..
+ 
+%  toc
+ 
 end
-
- cd ..
- cd ..
- cd ..
- 
- toc
- 
